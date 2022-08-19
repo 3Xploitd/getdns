@@ -64,9 +64,9 @@ def getsuddomains(domain):
         print(each)
 
     print("\n","{} unique subdomains were discovered for {}".format(len(subdomains_final),domain))
-if sys.argv[1] == '-d' or 'dns':
+if sys.argv[1] == '-d':
     getdns(sys.argv[2])
-elif sys.argv[1] == '-s' or 'subdomains':
+elif sys.argv[1] == '-s':
     getsuddomains(sys.argv[2])
 
 else:
