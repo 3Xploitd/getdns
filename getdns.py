@@ -3,6 +3,41 @@ import dns.resolver
 import sys
 import re
 import requests
+import argparse
+from pathlib import Path
+from urllib.parse import urlparse
+
+def dns_query(domain):
+
+    if args.file or args.domain != None:
+        if args.file:
+            domain_list = open(domain,'r').readlines()
+            for domain in domain_list:
+                domain = domain.strip()
+                if domain[0:4] == 'http':
+                    domain = getbase_domain(domain)
+                results = getdns(domain)
+
+
+        else:
+            domain = domain.strip()
+            if domain[0:4] == 'http':
+                domain = getbase_domain(domain)
+            results = getdns(domain)
+
+def getbase_domain(domain):
+    domain = domain.strip()
+    domain = urlparse(domain)[1]
+    if domain.count('/') >= 1:
+        domain = domain[0:(domain.find('/'))]
+    if domain.count('.') >= 2:
+        subdomain_number = domain.count('.')
+        domain = domain.split('.')
+        for number in range(0,subdomain_number-1):
+            domain.remove(domain[0])
+        domain = ".".join(domain)
+
+    return domain
 
 def getdns(domain):
 
@@ -35,7 +70,7 @@ def getdns(domain):
         print(each.upper(),'--> ',dns_data)
 
 
-def getsuddomains(domain):
+def getsubdomains(domain):
     subdomains = requests.get('https://crt.sh/?Identity={}'.format(domain)).text
     subdomain_list = re.findall(r'[\w\-_\.\*]+?\.{}'.format(domain),subdomains)
     subdomains_final = set()
@@ -43,32 +78,26 @@ def getsuddomains(domain):
         if each.startswith('*') == True:
             each = each[2:]
         subdomains_final.add(each)
-   # loop = True
-   # results=0
-   # while loop:
-   #     try:
-   #         google_search = requests.get('https://google.com/?q=site:'+domain+'&start='+str(results)).text
-   #         results+=10
-   #         subdomain_list = re.findall(r'[\w\-_\.\*]+?\.{}'.format(domain),google_search)
-   #         for each in subdomain_list:
 
-   #             subdomains_final.add(each)
-   #         print(len(subdomains_finals))
-   #         for each in subdomains_final:
-   #             print(each)
-   #     except:
-   #         loop = False
-   #         break
 
-    for each in sorted(subdomains_final):
-        print(each)
+if __name__ == '__main__':
 
-    print("\n","{} unique subdomains were discovered for {}".format(len(subdomains_final),domain))
-if sys.argv[1] == '-d':
-    getdns(sys.argv[2])
-elif sys.argv[1] == '-s':
-    getsuddomains(sys.argv[2])
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-d','--domain',help='Domain Name to query',action='store')
+    group.add_argument('-f','--file',help='File containing a list of domains to query',action='store')
+    args = parser.parse_args()
 
-else:
-    print("SyntaxError: Must specifiy which tool to use (ex. python3 getdns.py -d DOMAIN or python3 getdns.py -s DOMAIN)")
-sys.exit()
+    if args.file != None:
+        domain = args.file
+        if Path(domain).is_file() == False:
+            print('Argument -f/--file used but value is not a file, please use "-d/--domain"')
+            sys.exit()
+    else:
+        domain = args.domain
+        if Path(domain).is_file() == True:
+            print('Argument -d/--domain used but value is a file, please use "-f/--file"')
+            sys.exit()
+
+    dns_query(domain)
+
