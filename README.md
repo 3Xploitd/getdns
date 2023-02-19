@@ -2,7 +2,12 @@
 
 A python-based tool which automates the process of obtaining the dns records for a domain.
 
+## install
 
+Install by cloning the repo:
+`git clone https://github.com/3Xploitd/getdns.git`
+
+Install dnspython dependency with: `pip install dnspython`
 
 ## Usage:
 
